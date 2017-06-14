@@ -6,7 +6,8 @@ import {
   LayersControl,
   LayerGroup,
   Rectangle,
-  Popup
+  Polygon,
+  Popup,
 } from 'react-leaflet';
 
 import 'leaflet_assets/leaflet.css';
@@ -17,46 +18,71 @@ import Wrapper from './Wrapper';
 const { BaseLayer, Overlay } = LayersControl;
 // bounds are [y, x]
 const getAisles = () => ([
-  { id: 1, bounds: [[70, -90], [-63, -50]], rows: 10, cols: 2 },
-  { id: 2, bounds: [[36, -40], [-18, -3]], rows: 5, cols: 2 },
-  { id: 3, bounds: [[70, 4], [-63, 45]], rows: 8, cols: 2 },
+  { id: 1, bounds: [[60, -90], [-60, -50]], rows: 10, cols: 2 },
+  { id: 2, bounds: [[36, -40], [-5, -3]], rows: 4, cols: 1 },
+  { id: 3, bounds: [[60, 4], [-60, 45]], rows: 8, cols: 2 },
 ]);
 
-const getBays = (aisle) => {
+const polygonHeight = 10;
+
+const hasContract = () => Math.random() > 0.8;
+
+const getBays = (aisle, clickHandler) => {
   const bayWidth = Math.abs(aisle.bounds[0][1] - aisle.bounds[1][1]) / aisle.cols;
   const bayHeight = Math.abs(aisle.bounds[0][0] - aisle.bounds[1][0]) / aisle.rows;
-
   const bays = [];
-  // let position = aisle.bounds;
-
   for (let i = 0; i < aisle.rows; i += 1) {
-    const position = [
-      [aisle.bounds[0][0] - (i * bayHeight), aisle.bounds[0][1]],
-      [aisle.bounds[0][0] - ((i + 1) * bayHeight), aisle.bounds[1][1]],
-    ];
-    const opacity = 0.8;
-    bays.push(<Rectangle
-      key={`${aisle.id}-${i}`}
-      bounds={position}
-      fillOpacity={opacity}
-      color={i % 2 === 0 ? '#ffdddd' : '#ffaaaa'}
-    />);
+    for (let j = 0; j < aisle.cols; j += 1) {
+      const position = [
+        [
+          aisle.bounds[0][0] - (i * bayHeight),
+          aisle.bounds[0][1] + (j * bayWidth),
+        ],
+        [
+          aisle.bounds[0][0] - ((i + 1) * bayHeight),
+          aisle.bounds[0][1] + ((j + 1) * bayWidth),
+        ],
+      ];
+      const withContract = hasContract();
+      const id = `${aisle.id}-${j}-${i}`;
+      bays.push(<Rectangle
+        key={id}
+        bounds={position}
+        opacity={withContract ? 1 : 0.7}
+        color={withContract ? '#ff6666' : '#6666aa'}
+        onClick={withContract ? () => clickHandler(id) : null}
+      >
+        { withContract && <Popup><p>This has the contract information</p></Popup> }
+      </Rectangle>);
+    }
   }
 
   return bays;
+};
 
-  // return (<Rectangle
-  //   key={aisle.id}
-  //   bounds={aisle.bounds}
-  //   onClick={() => this.handleAisleClick(aisle.id)}
-  //   fillOpacity="0.8"
-  //   color="#ffdddd"
-  // />);
+const getBayEnd = (aisle) => {
+  const bayWidth = aisle.bounds[0][1] - aisle.bounds[1][1];
+  const bayMiddle = aisle.bounds[0][1] - (bayWidth / 2);
+  const points = [
+    [aisle.bounds[1][0], aisle.bounds[0][1]],
+    [aisle.bounds[1][0] - polygonHeight, bayMiddle],
+    [aisle.bounds[1][0], aisle.bounds[1][1]],
+  ];
+  return (<Polygon
+    color="#66aa66"
+    positions={points}
+    key={`bay-end-${aisle.id}`}
+  />);
 };
 
 class MapPanel extends Component {
   constructor(props) {
     super(props);
+
+    this.handleMapClick = this.handleMapClick.bind(this);
+    this.handleAisleClick = this.handleAisleClick.bind(this);
+    this.handleBayClick = this.handleBayClick.bind(this);
+
     this.state = {
       crs: L.CRS.Simple,
       lat: 0,
@@ -69,11 +95,16 @@ class MapPanel extends Component {
         [120, 120],
       ],
       aisles: getAisles(),
+      bays: getAisles().map((aisle) => getBays(aisle, this.handleBayClick)),
       selectedAisle: undefined,
+      selectedBay: undefined,
     };
+  }
 
-    this.handleMapClick = this.handleMapClick.bind(this);
-    this.handleAisleClick = this.handleAisleClick.bind(this);
+  handleBayClick(id) {
+    this.setState({
+      selectedBay: id,
+    });
   }
 
   handleAisleClick(id) {
@@ -85,7 +116,7 @@ class MapPanel extends Component {
 
   handleMapClick(e) {
     const a = this;
-    console.log('map click', e.latlng);
+    // console.log('map click', e.latlng);
   }
 
   render() {
@@ -121,7 +152,12 @@ class MapPanel extends Component {
             </Overlay>
             <Overlay name="Bays" checked>
               <LayerGroup>
-                { this.state.aisles.map((aisle) => getBays(aisle))}
+                { this.state.bays }
+              </LayerGroup>
+            </Overlay>
+            <Overlay name="Bay ends" checked>
+              <LayerGroup>
+                { this.state.aisles.map((aisle) => getBayEnd(aisle))}
               </LayerGroup>
             </Overlay>
           </LayersControl>
