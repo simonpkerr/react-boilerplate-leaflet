@@ -23,18 +23,35 @@ const getAisles = () => ([
 ]);
 
 const getBays = (aisle) => {
-  const width = Math.abs(aisle.bounds[0][1] - aisle.bounds[1][1]);
-  const height = Math.abs(aisle.bounds[0][0] - aisle.bounds[1][0]);
+  const bayWidth = Math.abs(aisle.bounds[0][1] - aisle.bounds[1][1]) / aisle.cols;
+  const bayHeight = Math.abs(aisle.bounds[0][0] - aisle.bounds[1][0]) / aisle.rows;
 
-  console.log(width, height);
+  const bays = [];
+  // let position = aisle.bounds;
 
-  return (<Rectangle
-    key={aisle.id}
-    bounds={aisle.bounds}
-    onClick={() => this.handleAisleClick(aisle.id)}
-    fillOpacity="0.8"
-    color="#ffdddd"
-  />);
+  for (let i = 0; i < aisle.rows; i += 1) {
+    const position = [
+      [aisle.bounds[0][0] - (i * bayHeight), aisle.bounds[0][1]],
+      [aisle.bounds[0][0] - ((i + 1) * bayHeight), aisle.bounds[1][1]],
+    ];
+    const opacity = 0.8;
+    bays.push(<Rectangle
+      key={`${aisle.id}-${i}`}
+      bounds={position}
+      fillOpacity={opacity}
+      color={i % 2 === 0 ? '#ffdddd' : '#ffaaaa'}
+    />);
+  }
+
+  return bays;
+
+  // return (<Rectangle
+  //   key={aisle.id}
+  //   bounds={aisle.bounds}
+  //   onClick={() => this.handleAisleClick(aisle.id)}
+  //   fillOpacity="0.8"
+  //   color="#ffdddd"
+  // />);
 };
 
 class MapPanel extends Component {
