@@ -1,4 +1,5 @@
 import React, { PropTypes, Component } from 'react';
+import L from 'leaflet';
 import {
   Map,
   ImageOverlay,
@@ -7,20 +8,26 @@ import {
   Rectangle,
   Popup
 } from 'react-leaflet';
+
 import 'leaflet_assets/leaflet.css';
 
 import bgImage from './blue-print.jpg';
 import Wrapper from './Wrapper';
 
 const { BaseLayer, Overlay } = LayersControl;
+// bounds are [y, x]
 const getAisles = () => ([
-  { id: 1, bounds: [[65, -87], [-51, -26]], rows: 10, cols: 2 },
-  { id: 2, bounds: [[49, -7], [-21, 69]], rows: 5, cols: 2 },
-  { id: 3, bounds: [[65, 87], [-51, 156]], rows: 8, cols: 2 }
+  { id: 1, bounds: [[70, -90], [-63, -50]], rows: 10, cols: 2 },
+  { id: 2, bounds: [[36, -40], [-18, -3]], rows: 5, cols: 2 },
+  { id: 3, bounds: [[70, 4], [-63, 45]], rows: 8, cols: 2 },
 ]);
 
 const getBays = (aisle) => {
-  const rows = aisle.rows;
+  const width = Math.abs(aisle.bounds[0][1] - aisle.bounds[1][1]);
+  const height = Math.abs(aisle.bounds[0][0] - aisle.bounds[1][0]);
+
+  console.log(width, height);
+
   return (<Rectangle
     key={aisle.id}
     bounds={aisle.bounds}
@@ -34,18 +41,16 @@ class MapPanel extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      lat: 150,
-      lng: 150,
+      crs: L.CRS.Simple,
+      lat: 0,
+      lng: 0,
       zoom: 1,
+      minZoom: 0,
+      // do this based on the image size
       imageBounds: [
-        [-150, -150],
-        [300, 300],
+        [-120, -120],
+        [120, 120],
       ],
-      mapBounds: [
-        [50, 50],
-        [200, 200],
-      ],
-      bays: [],
       aisles: getAisles(),
       selectedAisle: undefined,
     };
@@ -63,7 +68,7 @@ class MapPanel extends Component {
 
   handleMapClick(e) {
     const a = this;
-    // console.log('map click', e.latlng);
+    console.log('map click', e.latlng);
   }
 
   render() {
@@ -71,8 +76,11 @@ class MapPanel extends Component {
     return (
       <Wrapper>
         <Map
+          crs={this.state.crs}
+          minZoom={this.state.minZoom}
           center={position}
           zoom={this.state.zoom}
+          bounds={this.state.imageBounds}
           onClick={this.handleMapClick}
         >
           <LayersControl position="topright">

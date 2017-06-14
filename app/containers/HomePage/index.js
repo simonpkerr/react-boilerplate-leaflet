@@ -19,11 +19,7 @@ export default class HomePage extends React.PureComponent { // eslint-disable-li
   render() {
     return (
       <CenteredSection>
-        <h1>
-          <FormattedMessage {...messages.header} />
-        </h1>
         <MapPanel />
-
       </CenteredSection>
     );
   }
