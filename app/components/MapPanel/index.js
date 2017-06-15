@@ -8,6 +8,7 @@ import {
   Rectangle,
   Polygon,
   Popup,
+  Marker,
 } from 'react-leaflet';
 
 import 'leaflet_assets/leaflet.css';
@@ -79,7 +80,7 @@ class MapPanel extends Component {
   constructor(props) {
     super(props);
 
-    this.handleMapClick = this.handleMapClick.bind(this);
+    // this.handleMapClick = this.handleMapClick.bind(this);
     this.handleAisleClick = this.handleAisleClick.bind(this);
     this.handleBayClick = this.handleBayClick.bind(this);
 
@@ -101,6 +102,12 @@ class MapPanel extends Component {
     };
   }
 
+  // componentWillMount() {
+  //   this.setState({
+  //     bays:
+  //   });
+  // }
+
   handleBayClick(id) {
     this.setState({
       selectedBay: id,
@@ -114,10 +121,10 @@ class MapPanel extends Component {
     // console.log('selected aisle', this.state.selectedAisle);
   }
 
-  handleMapClick(e) {
-    const a = this;
-    // console.log('map click', e.latlng);
-  }
+  // handleMapClick(e) {
+  //   const a = this;
+  //   // console.log('map click', e.latlng);
+  // }
 
   render() {
     const position = [this.state.lat, this.state.lng];
@@ -158,6 +165,11 @@ class MapPanel extends Component {
             <Overlay name="Bay ends" checked>
               <LayerGroup>
                 { this.state.aisles.map((aisle) => getBayEnd(aisle))}
+              </LayerGroup>
+            </Overlay>
+            <Overlay name="Bay info" checked={this.state.zoom > 3}>
+              <LayerGroup>
+                <Marker position={position} />
               </LayerGroup>
             </Overlay>
           </LayersControl>
